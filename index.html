@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif; /* 이모지 폰트 우선 순위 추가 */
+            font-family: 'Inter', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; /* 이모지 지원 폰트 추가 */
             touch-action: none; 
             overflow: hidden; 
         }
@@ -84,7 +84,6 @@
             align-items: center;
             z-index: 50;
             text-align: center; 
-            border-radius: 50%; /* 미리보기 원형 표시 */
         }
         .evolution-display-container {
             width: 100%;
@@ -119,7 +118,7 @@
             justify-content: center; 
             align-items: center; 
             font-size: 18px; 
-            /* 이모지 대신 배경색으로 표시 (임시) */
+            background-color: transparent; 
         }
         .evo-arrow {
             font-size: 0.8rem;
@@ -162,16 +161,18 @@
         let gameWidth = Math.min(400, gameContainer.clientWidth - 16); 
         let gameHeight = Math.min(550, window.innerHeight * 0.65); 
 
-        // 과일 데이터: emoji 속성은 유지하되, createFruit에서 사용은 임시 중단
+        // FRUITS_DATA: 전체 크기 10% 증가 및 레벨 간 크기 차이 10% 추가 증가 적용
+        // 이전 반지름 (충돌 영역 조정 후): [13, 17, 21, 27, 32, 39, 44, 52]
+        // 새 반지름 (요청사항 반영): [14, 20, 25, 33, 39, 48, 54, 64]
         const FRUITS_DATA = [
-            { level: 0, name: '블루베리', radius: 15, color: '#4F86F7', scoreValue: 1, emoji: '🫐' }, 
-            { level: 1, name: '포도', radius: 19, color: '#8A2BE2', scoreValue: 2, emoji: '🍇' },    
-            { level: 2, name: '딸기', radius: 23, color: '#FF4757', scoreValue: 3, emoji: '🍓' },    
-            { level: 3, name: '망고', radius: 30, color: '#FFD700', scoreValue: 4, emoji: '🥭' },    
-            { level: 4, name: '오렌지', radius: 36, color: '#FFA500', scoreValue: 5, emoji: '🍊' },  
-            { level: 5, name: '멜론', radius: 43, color: '#90EE90', scoreValue: 6, emoji: '🍈' },    
-            { level: 6, name: '사과', radius: 49, color: '#FFC0CB', scoreValue: 7, emoji: '🍎' }, 
-            { level: 7, name: '수박', radius: 58, color: '#2E8B57', scoreValue: 8, emoji: '🍉' }     
+            { level: 0, name: '블루베리', radius: 14, color: '#4F86F7', scoreValue: 1, emoji: '🫐' }, 
+            { level: 1, name: '포도', radius: 20, color: '#8A2BE2', scoreValue: 2, emoji: '🍇' },    
+            { level: 2, name: '딸기', radius: 25, color: '#FF4757', scoreValue: 3, emoji: '🍓' },    
+            { level: 3, name: '망고', radius: 33, color: '#FFD700', scoreValue: 4, emoji: '🥭' },    
+            { level: 4, name: '오렌지', radius: 39, color: '#FFA500', scoreValue: 5, emoji: '🍊' },  
+            { level: 5, name: '멜론', radius: 48, color: '#90EE90', scoreValue: 6, emoji: '🍈' },    
+            { level: 6, name: '사과', radius: 54, color: '#FFC0CB', scoreValue: 7, emoji: '🍎' }, 
+            { level: 7, name: '수박', radius: 64, color: '#2E8B57', scoreValue: 8, emoji: '🍉' }     
         ];
 
         const MAX_LEVEL = FRUITS_DATA.length - 1; 
@@ -207,15 +208,17 @@
                 return;
             }
             nextFruitPreviewElement.style.display = 'flex';
-            const previewDiameter = fruitData.radius * 2;
-            const previewSize = Math.min(previewDiameter, 50);
+            const previewDiameter = fruitData.radius * 2; 
+            const previewSize = Math.min(previewDiameter, 50); // 미리보기 최대 크기 제한
             
             nextFruitPreviewElement.style.width = `${previewSize}px`;
             nextFruitPreviewElement.style.height = `${previewSize}px`;
-            // 이모지 대신 배경색으로 미리보기 표시
-            nextFruitPreviewElement.style.backgroundColor = fruitData.color; 
-            nextFruitPreviewElement.textContent = ''; // 이모지 텍스트 제거
+            nextFruitPreviewElement.textContent = fruitData.emoji; 
+            // 이모지 크기는 반지름에 비례하여 설정 (시각적 크기)
+            nextFruitPreviewElement.style.fontSize = `${fruitData.radius * 1.5}px`; // previewSize 대신 fruitData.radius 사용
+            nextFruitPreviewElement.style.backgroundColor = 'transparent'; 
             
+            if (!render || !render.canvas) return; 
             const canvasRect = render.canvas.getBoundingClientRect();
             let relativeXToCanvas = screenXPosition - canvasRect.left;
             
@@ -237,8 +240,7 @@
 
                 const iconDiv = document.createElement('div');
                 iconDiv.className = 'fruit-evo-icon';
-                // iconDiv.textContent = fruit.emoji; // 이모지 대신 배경색 사용
-                iconDiv.style.backgroundColor = fruit.color; 
+                iconDiv.textContent = fruit.emoji; 
                 
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = fruit.name; 
@@ -258,6 +260,7 @@
 
 
         function initGame() {
+            console.log("Initializing game...");
             gameWidth = gameContainer.querySelector('#canvasContainer').clientWidth;
             gameHeight = Math.min(550, window.innerHeight * 0.65);
 
@@ -293,9 +296,11 @@
                 }
             });
             Render.run(render);
+            console.log("Render started.");
 
             runner = Runner.create();
             Runner.run(runner, engine);
+            console.log("Runner started.");
             
             gameOverLineY = gameHeight * GAME_OVER_LINE_Y_PERCENT;
 
@@ -310,75 +315,128 @@
                 Bodies.rectangle(-WALL_THICKNESS / 2, gameHeight / 2, WALL_THICKNESS, gameHeight, { ...wallOptions, label: 'wall-left' }),   
                 Bodies.rectangle(gameWidth + WALL_THICKNESS / 2, gameHeight / 2, WALL_THICKNESS, gameHeight, { ...wallOptions, label: 'wall-right' })
             ]);
+            console.log("Walls added.");
             
             populateEvolutionDisplay(); 
             setupEventListeners();
             
-            const initialPreviewScreenX = gameContainer.getBoundingClientRect().left + canvasContainer.getBoundingClientRect().left + gameWidth / 2;
-            updateNextFruitPreview(FRUITS_DATA[currentDroppingFruitLevel], initialPreviewScreenX);
+            if (render && render.canvas) { 
+                 const initialPreviewScreenX = gameContainer.getBoundingClientRect().left + render.canvas.getBoundingClientRect().left + gameWidth / 2;
+                 updateNextFruitPreview(FRUITS_DATA[currentDroppingFruitLevel], initialPreviewScreenX);
+            } else {
+                console.warn("render.canvas not ready for initial preview update.");
+            }
+            console.log("Game initialized.");
         }
         
-        function drawGameOverLine(event) {
+        function drawItemsOnCanvas(event) {
             const context = render.context;
+
+            context.clearRect(0, 0, gameWidth, gameHeight); 
+
             context.beginPath();
             context.moveTo(0, gameOverLineY);
             context.lineTo(gameWidth, gameOverLineY);
             context.strokeStyle = 'rgba(255, 0, 0, 0.7)'; 
             context.lineWidth = 2;
             context.stroke();
+
+            const fruitsInWorld = Composite.allBodies(engine.world).filter(body => body.label === 'fruit');
+            fruitsInWorld.forEach(fruitBody => {
+                const fruitData = FRUITS_DATA[fruitBody.level];
+                if (fruitData && fruitData.emoji) {
+                    // 이모지 크기는 물리적 반지름(fruitBody.circleRadius)에 비례하여 설정
+                    const fontSize = fruitBody.circleRadius * 1.8; 
+                    context.font = `${fontSize}px 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif`; 
+                    context.textAlign = 'center';
+                    context.textBaseline = 'middle';
+                    
+                    context.save(); 
+                    context.translate(fruitBody.position.x, fruitBody.position.y); 
+                    context.rotate(fruitBody.angle); 
+                    context.fillText(fruitData.emoji, 0, 0); 
+                    context.restore(); 
+                }
+            });
         }
 
         function createFruit(x, y, level) {
+            console.log(`Creating fruit: level ${level} at (${x}, ${y})`);
             const fruitData = FRUITS_DATA[level];
-            if (!fruitData) { // 안전 장치
+            if (!fruitData) { 
                 console.error("Fruit data is undefined for level:", level);
                 return null;
             }
+            console.log("Fruit data for creation (adjusted radius):", fruitData);
 
-            const fruitBody = Bodies.circle(x, y, fruitData.radius, {
+            const fruitBody = Bodies.circle(x, y, fruitData.radius, { // 조정된 반지름 사용
                 label: 'fruit',
                 level: level,
                 restitution: 0.2, 
                 friction: 0.1, 
                 density: 0.001 + (level * 0.0005), 
                 render: {
-                    // 이모지 렌더링(render.text) 대신 단순 색상 채우기로 변경
-                    fillStyle: fruitData.color, 
-                    // strokeStyle: 'transparent', // 테두리가 필요하면 활성화
+                    fillStyle: fruitData.color, // Matter.js가 이 색으로 원을 그림
                 },
             }); 
-
+            console.log("Created fruitBody (adjusted radius):", fruitBody);
             return fruitBody;
         }
         
         function dropFruit(canvasRelativeX, screenXForPreview) {
-            if (isGameOver || !canDropFruit) return;
+            console.log("dropFruit called with canvasRelativeX:", canvasRelativeX);
+            if (isGameOver || !canDropFruit) {
+                console.log("Cannot drop fruit. GameOver:", isGameOver, "CanDrop:", canDropFruit);
+                return;
+            }
 
-            const fruitData = FRUITS_DATA[currentDroppingFruitLevel];
-            const dropX = Math.max(fruitData.radius, Math.min(canvasRelativeX, gameWidth - fruitData.radius));
+            const fruitDataForDrop = FRUITS_DATA[currentDroppingFruitLevel];
+            console.log("Current fruit to drop data:", fruitDataForDrop);
+            if (!fruitDataForDrop) {
+                console.error("No fruit data for currentDroppingFruitLevel:", currentDroppingFruitLevel);
+                return;
+            }
+
+            const dropX = Math.max(fruitDataForDrop.radius, Math.min(canvasRelativeX, gameWidth - fruitDataForDrop.radius));
             const dropY = gameOverLineY * 0.5; 
+            console.log(`Attempting to create fruit at dropX: ${dropX}, dropY: ${dropY}, level: ${currentDroppingFruitLevel}`);
+            
             const newFruit = createFruit(dropX, dropY, currentDroppingFruitLevel); 
+            console.log("Result of createFruit (newFruit):", newFruit);
 
-            if (newFruit) { // newFruit이 null이 아닌지 확인
+            if (newFruit) { 
                 World.add(engine.world, newFruit);
+                console.log("Fruit added to world.");
                 canDropFruit = false;
                 currentDroppingFruitLevel = getRandomInitialLevel(); 
                 
                 setTimeout(() => {
                     canDropFruit = true;
                     if (!isGameOver) {
-                         updateNextFruitPreview(FRUITS_DATA[currentDroppingFruitLevel], screenXForPreview);
+                         if (render && render.canvas) { 
+                            updateNextFruitPreview(FRUITS_DATA[currentDroppingFruitLevel], screenXForPreview);
+                         }
                     }
                 }, DROP_COOLDOWN);
             } else {
-                console.error("Failed to create fruit, newFruit is null.");
+                console.error("Failed to create fruit in dropFruit, newFruit is null.");
             }
         }
 
         function setupEventListeners() {
+            console.log("Setting up event listeners...");
+            if (!render || !render.canvas) {
+                console.error("Render or render.canvas not available for setting up event listeners.");
+                return;
+            }
             const eventTarget = render.canvas; 
 
             const handleDrop = (clientX) => {
+                console.log("handleDrop triggered. clientX:", clientX);
+                if (!render || !render.canvas) {
+                     console.error("handleDrop: render.canvas not available.");
+                     return;
+                }
                 if (isGameOver || !canDropFruit) return;
                 lastKnownMouseScreenX = clientX; 
                 const rect = eventTarget.getBoundingClientRect();
@@ -401,7 +459,9 @@
             const handlePreviewMove = (clientX) => {
                 if (isGameOver || !canDropFruit) return;
                 lastKnownMouseScreenX = clientX;
-                updateNextFruitPreview(FRUITS_DATA[currentDroppingFruitLevel], clientX);
+                if (render && render.canvas) { 
+                    updateNextFruitPreview(FRUITS_DATA[currentDroppingFruitLevel], clientX);
+                }
             };
             
             gameContainer.addEventListener('mousemove', (event) => handlePreviewMove(event.clientX));
@@ -460,13 +520,8 @@
                 }
             });
             
-            Events.on(render, 'afterRender', drawGameOverLine);
-
-
-            restartButton.addEventListener('click', () => {
-                gameOverOverlay.classList.add('hidden');
-                initGame();
-            });
+            Events.on(render, 'afterRender', drawItemsOnCanvas);
+            console.log("Event listeners set up.");
         }
 
         function updateScoreDisplay() {
@@ -477,6 +532,7 @@
             if (isGameOver) return; 
             isGameOver = true;
             Runner.stop(runner); 
+            console.log("Game Over triggered.");
 
             finalScoreElement.textContent = score;
             gameOverOverlay.classList.remove('hidden');
@@ -493,10 +549,12 @@
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
+                console.log("Window resized, re-initializing game.");
                 initGame(); 
             }, 250);
         });
 
+        // 초기 게임 시작
         initGame();
 
     </script>
